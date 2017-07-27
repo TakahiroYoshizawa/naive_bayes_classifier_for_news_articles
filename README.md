@@ -12,11 +12,14 @@ naive_bayes_classifier_for_news_articles
 * File Name : URLのhttps://gunosy.com/articles/ 以降 exam>> "<b>Ryw5G</b>"
 * File Content :
   - Title   :    
-  Xpath:  /html/body/div[7]/div[1]/div[2]/div[2]/h1
-  /html/body/div itemscope "articleBody"/div class="content_header"/div class="article_header gtm_click" data_gtm = article_header/div article_header_text/h1 class="article_header_title"
+  Xpath:  /html/body/div[7]/div[1]/div[2]/div[2]/h1  
+  {\h1 class="article_header_title"}
 
   - Article :  
   Xpath:  /html/body/div[7]/div[2]/div/div[1]/div[2]
+  {\div class="article gtm-click"}
+
+Xpath & lxmlでは，取り出せなかったのでふつーにBeautifulSoupで取り出しました．
 
 #### 単語への分割
 

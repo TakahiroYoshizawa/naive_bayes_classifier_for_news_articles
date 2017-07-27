@@ -21,7 +21,6 @@ def get_url():
     title = soup.find_all("h1", {"class": "article_header_title"})
     article = soup.find_all("div", {"class": "article gtm-click"})
 
-
     print(title[0].get_text())
     print(article[0].get_text())
 
