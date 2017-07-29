@@ -5,6 +5,7 @@ import logging
 import urllib.request as urlreq
 from bs4 import BeautifulSoup
 import ssl
+import MeCab
 
 
 #@click.command()
@@ -18,15 +19,25 @@ def get_url():
     html = urlreq.urlopen(url).read()
 
     soup = BeautifulSoup(html,"lxml")
-    title = soup.find_all("h1", {"class": "article_header_title"})
-    article = soup.find_all("div", {"class": "article gtm-click"})
+    title_part = soup.find_all("h1", {"class": "article_header_title"})
+    article_part = soup.find_all("div", {"class": "article gtm-click"})
 
-    print(title[0].get_text())
-    print(article[0].get_text())
+    title = title_part[0].get_text()
+    article = article_part[0].get_text()
 
-    return url
+    return url , title, article
 
     # https://gunosy.com/articles/Ryw5G
+
+def keitaiso_kaiseki(title, article):
+    print(title)
+    print(article)
+
+    # TODO: MeCab.Tagger()でRuntimeErrorを解消しなきゃいけない.
+    # どうやら環境設定がうまく行ってないみたい
+    print(MeCab.Tagger().parse("今日もしないとね"))
+
+
 def main(input_filepath, output_filepath):
     """ Runs data processing scripts to turn raw data from (../raw) into
         cleaned data ready to be analyzed (saved in ../processed).
@@ -36,7 +47,8 @@ def main(input_filepath, output_filepath):
 
 
 if __name__ == '__main__':
-    url = get_url()
+    url, title, article = get_url()
+    keitaiso_kaiseki(title, article)
 
 
     #logging.basicConfig(level=logging.INFO, format=log_fmt)
