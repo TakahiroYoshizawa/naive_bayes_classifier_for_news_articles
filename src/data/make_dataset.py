@@ -35,7 +35,10 @@ def keitaiso_kaiseki(title, article):
 
     # TODO: MeCab.Tagger()でRuntimeErrorを解消しなきゃいけない.
     # どうやら環境設定がうまく行ってないみたい
-    print(MeCab.Tagger().parse("今日もしないとね"))
+    # bash $ brew install mecab-ipadic
+    m = MeCab.Tagger()
+    print(m.parse('形態素解析をしたい文章を入れる'))
+    print(m.parse(article))
 
 
 def main(input_filepath, output_filepath):
