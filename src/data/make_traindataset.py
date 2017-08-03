@@ -6,13 +6,15 @@ import urllib.request as urlreq
 from bs4 import BeautifulSoup
 import ssl
 import MeCab
+import pandas as pd
 
 
-#@click.command()
-#@click.argument('input_filepath', type=click.Path(exists=True))
-#@click.argument('output_filepath', type=click.Path())
 
 def get_url():
+    '''
+    
+    :return: 
+    '''
     ssl._create_default_https_context = ssl._create_unverified_context
     print("カテゴリ分類を行いたい記事のURLを入力してください．")
     url = str("https://" + input())
@@ -22,10 +24,11 @@ def get_url():
     title_part = soup.find_all("h1", {"class": "article_header_title"})
     article_part = soup.find_all("div", {"class": "article gtm-click"})
 
+
     title = title_part[0].get_text()
     article = article_part[0].get_text()
 
-    return url , title, article
+    return url, title, article
 
     # https://gunosy.com/articles/Ryw5G
 
@@ -34,11 +37,26 @@ def keitaiso_kaiseki(title, article):
     print(article)
 
     # TODO: MeCab.Tagger()でRuntimeErrorを解消しなきゃいけない.
-    # どうやら環境設定がうまく行ってないみたい
+    # うまく行った
     # bash $ brew install mecab-ipadic
     m = MeCab.Tagger()
-    print(m.parse('形態素解析をしたい文章を入れる'))
-    print(m.parse(article))
+    article = m.parse(article)
+
+    print(article.split('\n'))
+
+
+    article_list = [word.split('\t') for word in article.split('\n')]
+
+
+    del article_list[-1]
+    del article_list[-1]
+
+    article_df = pd.DataFrame(article_list, columns=['word','word_class'])
+    article_df['word_class'] = article_df['word_class'].str.split(',')
+    article_df['word_class'] = article_df['word_class'].apply(lambda x: x[0])
+
+    article_df_noun = article_df[article_df['word_class']=='名詞']
+    print(article_df_noun.groupby('word').count().sort_values('word_class', ascending = False))
 
 
 def main(input_filepath, output_filepath):

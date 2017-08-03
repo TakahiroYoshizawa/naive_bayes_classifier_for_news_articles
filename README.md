@@ -22,7 +22,7 @@ naive_bayes_classifier_for_news_articles
 Xpath & lxmlでは，取り出せなかったのでふつーにBeautifulSoupで取り出しました．
 
 #### 単語への分割
-
+    MeCabを使用して
 
 
 #### 分類機の作成
