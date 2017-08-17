@@ -25,9 +25,10 @@ def Get_Url_List():
     for i in range(1, 9):
         url_list = []
 
-        for j in range(1, 11):
+        for j in range(1, 10):
             time.sleep(1)
             url_to_open = 'https://gunosy.com/categories/' + str(i) + '/ranking?page=' + str(j)
+
             html = urlreq.urlopen(url_to_open)
             soup = BeautifulSoup(html, 'html.parser')
             gunocy_main_bsobj = BeautifulSoup(str(soup.find_all('div', 'list_thumb')), 'html.parser')
@@ -38,17 +39,17 @@ def Get_Url_List():
         url_list = pd.Series(url_list, name='catg'+str(i))
         url_dict = pd.concat([url_dict, url_list], axis=1)
 
-    url_dict.to_csv("Gunosy_urllist_0814.csv", encoding='utf-8')
-
-    print(url_dict)
-
-    return url_dict
+    url_dict.to_csv("Gunosy_urllist_0817.csv", encoding='utf-8')
 
 
-def URLDict_to_WordsVector(url_dict):
+def URLDict_to_WordsVector(url_list):
+    words_in_page_list = pd.Series(url_list.apply(Get_TitleArticle))
+    words_vector_list = pd.DataFrame()
+    for i in words_in_page_list:
+        words_vector = Keitaiso_Kaiseki(i)
+        words_vector_list = pd.concat([words_vector_list, words_vector], axis=1)
 
-
-
+    return words_vector_list
 
 
 def Get_TitleArticle(url):
@@ -58,50 +59,50 @@ def Get_TitleArticle(url):
     :return: Title, Article
     '''
     ssl._create_default_https_context = ssl._create_unverified_context
-    html = urlreq.urlopen(url).read()
+    try:
+        html = urlreq.urlopen(url).read()
 
-    soup = BeautifulSoup(html, "lxml")
-    title_part = soup.find_all("h1", {"class": "article_header_title"})
-    article_part = soup.find_all("div", {"class": "article gtm-click"})
+        soup = BeautifulSoup(html, 'html.parser')
+        # title_part = soup.find_all("h1", {"class": "article_header_title"})
+        article_part = soup.find_all("div", {"class": "article gtm-click"})
 
-    title = title_part[0].get_text()
-    article = article_part[0].get_text()
+        # title = title_part[0].get_text()
+        article = article_part[0].get_text()
+
+    except:
+        article = str(None)
 
     time.sleep(1)
 
-    return url, title, article
+    words_in_page = article
+
+    return words_in_page
 
 
-def Keitaiso_Kaiseki(title, article):
-    """
-    
-    :param title: 
-    :param article: 
+def Keitaiso_Kaiseki(script):
+    '''
+    出力各記事のデータを形態素解析する．
+    その上で名詞のみを取り出し単語別にその回数を数えたものを
+    :param script: 
     :return: 
-    """
+    '''
 
-    print(title)
-    print(article)
-
-    # TODO: MeCab.Tagger()でRuntimeErrorを解消しなきゃいけない.
-    # うまく行った
-    # bash $ brew install mecab-ipadic
     m = MeCab.Tagger()
-    article = m.parse(article)
+    script = m.parse(script)
 
-    print(article.split('\n'))
+    script_list = [word.split('\t') for word in script.split('\n')]
+    del script_list[-1]
+    del script_list[-1]
 
-    article_list = [word.split('\t') for word in article.split('\n')]
+    script_df = pd.DataFrame(script_list, columns=['word', 'word_class'])
 
-    del article_list[-1]
-    del article_list[-1]
+    script_df['word_class'] = script_df['word_class'].str.split(',')
+    script_df['word_class'] = script_df['word_class'].apply(lambda x: x[0])
 
-    article_df = pd.DataFrame(article_list, columns=['word', 'word_class'])
-    article_df['word_class'] = article_df['word_class'].str.split(',')
-    article_df['word_class'] = article_df['word_class'].apply(lambda x: x[0])
+    script_df_noun = script_df[script_df['word_class'] == '名詞']
+    words_vector = script_df_noun.groupby('word').count().sort_values('word_class', ascending=False)
 
-    article_df_noun = article_df[article_df['word_class' == '名詞']]
-    print(article_df_noun.groupby('word').count().sort_values('word_class', ascending=False))
+    return words_vector
 
 
 def main():
@@ -109,22 +110,15 @@ def main():
     Runs data processing scripts to turn raw data from (../raw) into
     cleaned data ready to be analyzed (saved in ../processed).
     """
-    # logger = logging.getLogger(__name__)
-    # logger.info('making final data set from raw data')
+    Get_Url_List()
+    url_dict = pd.read_csv('Gunosy_urllist_0817.csv', header=0, index_col=0)
 
-    url_dict = Get_Url_List()
-    # url, title, article = Get_TitleArticle()
-    # keitaiso_kaiseki(title, article)
-
+    for i in url_dict.columns:
+        url_list = url_dict[i].dropna()
+        words_vector_list = URLDict_to_WordsVector(url_list)
+        words_vector_list = words_vector_list.fillna(0)
+        code = "words_vector_list.to_csv('words_vector_" + str(i) + ".csv')"
+        exec(code)
 
 if __name__ == '__main__':
-    # logging.basicConfig(level=logging.INFO, format=log_fmt)
-
-    # not used in this stub but often useful for finding various files
-    # project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
-
-    # find .env automagically by walking up directories until it's found, then
-    # load up the .env entries as environment variables
-    # load_dotenv(find_dotenv())
-
     main()
